@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import './plogin.css';
+import './login.css';
 
 // TODO (STEP 7): If you have Firebase, import your config here:
 // import { auth } from '../firebase'; // <-- Update path to your firebase config
