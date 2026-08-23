@@ -1,0 +1,249 @@
+/* Login.css - Styled to match PrepForge Signup Page (Image 2) */
+
+:root {
+    /* You can match these exact hex codes to your Signup page if they differ slightly */
+    --prep-navy: #0f172a;
+    --prep-orange: #f97316;
+    --prep-orange-hover: #ea580c;
+    --prep-gray-border: #e2e8f0;
+    --prep-text-dark: #1e293b;
+    --prep-text-light: #64748b;
+    --prep-bg-card: #ffffff;
+    --prep-bg-body: #f8fafc;
+}
+
+.login-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background-color: var(--prep-bg-body);
+    /* Or use your split background if preferred */
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    padding: 18px;
+}
+
+/* Matching the visual identity of your Image 2 card */
+.login-card {
+    background: var(--prep-bg-card);
+    width: 100%;
+    max-width: 480px;
+    padding: 40px;
+    border-radius: 16px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.login-header {
+    text-align: center;
+    margin-bottom: 27px;
+}
+
+.logo-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 22px;
+}
+
+.logo-text {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--prep-navy);
+}
+
+.login-header h1 {
+    font-size: 1.85rem;
+    font-weight: 700;
+    color: var(--prep-navy);
+    margin-bottom: 11px;
+}
+
+.login-header p {
+    font-size: 0.95rem;
+    color: var(--prep-text-light);
+    line-height: 1.5;
+}
+
+.error-message {
+    background-color: #fee2e2;
+    color: #ef4444;
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    font-size: 0.9rem;
+    text-align: center;
+}
+
+.login-form .input-group {
+    margin-bottom: 16px;
+}
+
+.login-form label {
+    display: block;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--prep-navy);
+    margin-bottom: 3px;
+}
+
+.input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.login-form input {
+    width: 100%;
+    padding: 12px 16px;
+    font-size: 1rem;
+    border: 1px solid var(--prep-gray-border);
+    border-radius: 8px;
+    outline: none;
+    transition: all 0.2s ease;
+    color: var(--prep-text-dark);
+}
+
+.login-form input::placeholder {
+    color: #94a3b8;
+}
+
+.login-form input:focus {
+    border-color: var(--prep-orange);
+    box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.15);
+    /* Orange focus glow */
+}
+
+.toggle-password {
+    position: absolute;
+    right: 12px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #94a3b8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3px;
+    transition: color 0.2s;
+}
+
+.toggle-password:hover {
+    color: var(--prep-navy);
+}
+
+.forgot-password {
+    text-align: right;
+    margin-bottom: 17px;
+}
+
+.forgot-password a {
+    font-size: 0.9rem;
+    color: var(--prep-orange);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.forgot-password a:hover {
+    text-decoration: underline;
+}
+
+/* PrepForge matching Orange Button */
+.login-btn {
+    width: 100%;
+    padding: 9px;
+    background-color: var(--prep-orange);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.login-btn:hover:not(:disabled) {
+    background-color: var(--prep-orange-hover);
+}
+
+.login-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.spinner {
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: white;
+    animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Social Buttons designed to fit the PrepForge aesthetic */
+.social-login {
+    margin-top: 24px;
+    display: flex;
+    gap: 12px;
+    justify-content: space-between;
+}
+
+.social-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px;
+    border: 1px solid var(--prep-gray-border);
+    background-color: white;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--prep-text-dark);
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.social-btn:hover {
+    background-color: #f1f5f9;
+}
+
+.signup-prompt {
+    margin-top: 32px;
+    text-align: center;
+    font-size: 0.95rem;
+    color: var(--prep-text-light);
+}
+
+.signup-prompt a {
+    color: var(--prep-orange);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.signup-prompt a:hover {
+    text-decoration: underline;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+    .login-card {
+        padding: 24px;
+        border-radius: 12px;
+    }
+
+    .social-login {
+        flex-direction: column;
+    }
+}
