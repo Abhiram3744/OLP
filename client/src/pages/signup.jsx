@@ -16,13 +16,21 @@ const navigate = useNavigate(); // <-- ADD THIS LINE
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [status, setStatus] = useState({ type: '', message: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   async function handleSubmit(event) {
     event.preventDefault();
     setStatus({ type: '', message: '' });
+
+    if (password !== confirmPassword) {
+      setStatus({ type: 'error', message: 'Passwords do not match.' });
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const response = await fetch('/api/auth/register', {
@@ -34,6 +42,7 @@ const navigate = useNavigate(); // <-- ADD THIS LINE
       if (!response.ok) throw new Error(data.message || 'Unable to create your account.');
       setStatus({ type: 'success', message: `Account created for ${data.user.email}.` });
       setPassword('');
+      setConfirmPassword('');
       setTimeout(() => {
         navigate('/login');
       }, 1500);
@@ -57,6 +66,7 @@ const navigate = useNavigate(); // <-- ADD THIS LINE
         <form onSubmit={handleSubmit}>
           <div className="field"><label htmlFor="email">Email</label><div className="input-wrap"><input type="email" id="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@example.com" required autoComplete="email" /></div></div>
           <div className="field"><label htmlFor="password">Password</label><div className="input-wrap"><input type={showPassword ? 'text' : 'password'} id="password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Enter your password" required autoComplete="new-password" minLength="8" /><button type="button" className="toggle-eye" onClick={() => setShowPassword(!showPassword)} aria-label={showPassword ? 'Hide password' : 'Show password'}><EyeIcon hidden={showPassword} /></button></div><p className="hint">Use at least 8 characters.</p></div>
+          <div className="field"><label htmlFor="confirm-password">Confirm password</label><div className="input-wrap"><input type={showConfirmPassword ? 'text' : 'password'} id="confirm-password" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} placeholder="Confirm your password" required autoComplete="new-password" minLength="8" /><button type="button" className="toggle-eye" onClick={() => setShowConfirmPassword(!showConfirmPassword)} aria-label={showConfirmPassword ? 'Hide confirmed password' : 'Show confirmed password'}><EyeIcon hidden={showConfirmPassword} /></button></div></div>
           <button type="submit" className="btn-primary" disabled={isSubmitting}>{isSubmitting ? 'Creating account…' : 'Create account'}</button>
           {status.message && <p className={`form-status ${status.type}`} role="status">{status.message}</p>}
         </form>
