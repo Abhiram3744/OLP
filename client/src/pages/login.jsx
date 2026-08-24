@@ -41,7 +41,7 @@ const Login = () => {
       await new Promise((resolve) => setTimeout(resolve, 1500));
       
       // STEP 6: Redirect on successful login
-      navigate('/'); // Redirects to Dashboard/Home
+      navigate('/onboarding'); // First-time user setup
       
     } catch (err) {
       // Firebase error handling
