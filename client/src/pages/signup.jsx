@@ -1,5 +1,8 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { auth, db } from '../firebase';
 
 
 function BrandMark() {
@@ -23,35 +26,70 @@ const navigate = useNavigate(); // <-- ADD THIS LINE
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   async function handleSubmit(event) {
-    event.preventDefault();
-    setStatus({ type: '', message: '' });
+  event.preventDefault();
+  setStatus({ type: '', message: '' });
 
-    if (password !== confirmPassword) {
-      setStatus({ type: 'error', message: 'Passwords do not match.' });
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      const response = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.message || 'Unable to create your account.');
-      setStatus({ type: 'success', message: `Account created for ${data.user.email}.` });
-      setPassword('');
-      setConfirmPassword('');
-      setTimeout(() => {
-        navigate('/login');
-      }, 1500);
-    } catch (error) {
-      setStatus({ type: 'error', message: error.message });
-    } finally {
-      setIsSubmitting(false);
-    }
+  if (password !== confirmPassword) {
+    setStatus({
+      type: 'error',
+      message: 'Passwords do not match.',
+    });
+    return;
   }
+
+  setIsSubmitting(true);
+
+  try {
+    // Create the user in Firebase Authentication
+    const userCredential = await createUserWithEmailAndPassword(
+      auth,
+      email,
+      password
+    );
+
+    const user = userCredential.user;
+
+    // Create the user's profile in Firestore
+    await setDoc(doc(db, 'users', user.uid), {
+      uid: user.uid,
+      email: user.email,
+      createdAt: serverTimestamp(),
+    });
+
+    setStatus({
+      type: 'success',
+      message: `Account created for ${user.email}.`,
+    });
+
+    setPassword('');
+    setConfirmPassword('');
+
+    setTimeout(() => {
+      navigate('/login');
+    }, 1500);
+
+  } catch (error) {
+    console.error('Signup error:', error);
+
+    let message = 'Unable to create your account.';
+
+    if (error.code === 'auth/email-already-in-use') {
+      message = 'An account already exists with this email.';
+    } else if (error.code === 'auth/invalid-email') {
+      message = 'Please enter a valid email address.';
+    } else if (error.code === 'auth/weak-password') {
+      message = 'Password should be at least 6 characters.';
+    }
+
+    setStatus({
+      type: 'error',
+      message,
+    });
+
+  } finally {
+    setIsSubmitting(false);
+  }
+}
 
   return <main className="page-shell">
     <section className="panel-left" aria-label="PrepForge introduction">
