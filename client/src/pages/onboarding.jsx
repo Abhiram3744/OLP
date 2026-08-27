@@ -138,7 +138,34 @@ export default function OnboardingPage() {
 
   const next = () => { if (validation) { setError(validation); return; } setError(''); setCurrentStep((step) => Math.min(step + 1, steps.length - 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); };
   const back = () => { setError(''); setCurrentStep((step) => Math.max(step - 1, 0)); };
-  const handleSubmit = async () => { setSubmitting(true); console.log('PrepForge onboarding data:', data); await new Promise((resolve) => setTimeout(resolve, 1400)); setSubmitting(false); };
+ const handleSubmit = async () => {
+  setSubmitting(true);
+  setError('');
+
+  try {
+    const response = await fetch('http://localhost:5000/api/roadmap/generate', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.message || 'Failed to generate roadmap.');
+    }
+
+    console.log('Generated roadmap:', result);
+
+  } catch (error) {
+    console.error('Roadmap generation failed:', error);
+    setError(error.message || 'Failed to generate roadmap.');
+  } finally {
+    setSubmitting(false);
+  }
+};
   const views = [<WelcomeStep />, <ProfileStep data={data} update={update} />, <CareerStep data={data} update={update} />, <SkillsStep data={data} update={update} setSkill={setSkill} />, <PreferencesStep data={data} update={update} />, <ReviewStep data={data} onEdit={setCurrentStep} />];
 
   return <main className="onboarding-page"><div className="onboarding-shell"><Brand /><ProgressStepper currentStep={currentStep} /><section className="onboarding-card"><div className="step-content" key={currentStep}>{views[currentStep]}</div>{error && <p className="onboarding-error" role="alert">{error}</p>}<footer className="onboarding-actions">{currentStep > 0 && <button className="back-button" type="button" onClick={back} disabled={submitting}>← Back</button>}<span />{currentStep < steps.length - 1 ? <button className="continue-button" type="button" onClick={next}>{currentStep === 0 ? 'Get Started' : 'Continue'} <span aria-hidden="true">→</span></button> : <button className="continue-button submit-button" type="button" onClick={handleSubmit} disabled={submitting}>{submitting ? <><i className="button-spinner" />Forging your roadmap...</> : <>Generate My Roadmap <span aria-hidden="true">→</span></>}</button>}</footer></section><p className="onboarding-note">Your answers help personalize your roadmap. You can update them anytime.</p></div></main>;

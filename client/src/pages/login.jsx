@@ -138,30 +138,5 @@ const Login = () => {
     </div>
   );
 };
-async function handleForgotPassword() {
-  if (!email) {
-    setStatus({
-      type: "error",
-      message: "Please enter your email address first.",
-    });
-    return;
-  }
-
-  try {
-    await sendPasswordResetEmail(auth, email);
-
-    setStatus({
-      type: "success",
-      message: "Password reset email sent. Please check your inbox.",
-    });
-  } catch (error) {
-    console.error("Password reset error:", error);
-
-    setStatus({
-      type: "error",
-      message: "Unable to send password reset email.",
-    });
-  }
-}
 
 export default Login;
