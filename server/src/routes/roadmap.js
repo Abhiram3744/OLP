@@ -1,5 +1,6 @@
 import express from 'express';
 import { GoogleGenAI } from '@google/genai';
+import User from '../models/User.js';
 
 const router = express.Router();
 
@@ -9,10 +10,29 @@ const ai = new GoogleGenAI({
 
 router.post('/generate', async (req, res) => {
   try {
-    const userProfile = req.body;
+    const { firebaseUid, ...userProfile } = req.body;
 
+    // Check Firebase UID
+    if (!firebaseUid) {
+      return res.status(400).json({
+        success: false,
+        message: 'Firebase UID is required',
+      });
+    }
+
+    console.log('Received Firebase UID:', firebaseUid);
     console.log('Received user profile:');
     console.log(userProfile);
+
+    // Find the MongoDB user using Firebase UID
+    const user = await User.findOne({ firebaseUid });
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found in database',
+      });
+    }
 
     const prompt = `
 You are an expert technical interview preparation roadmap generator.
@@ -26,7 +46,9 @@ ${JSON.stringify(userProfile, null, 2)}
 IMPORTANT INSTRUCTIONS:
 
 1. PERSONALIZATION
+
 Create the roadmap specifically for this user based on:
+
 - current status
 - degree and branch
 - current year
@@ -41,12 +63,13 @@ Create the roadmap specifically for this user based on:
 - selected focus areas
 
 2. ONLY SELECTED FOCUS AREAS
+
 The user's selected focus areas are extremely important.
 
 If the user selected DSA, generate a complete DSA roadmap.
 
-If the user selected Web Development / Development, generate the
-relevant development roadmap.
+If the user selected Web Development / Development, generate
+the relevant development roadmap.
 
 If the user selected Projects, generate project-related topics.
 
@@ -57,21 +80,15 @@ Do not add unrelated subjects that the user did not select.
 However, include fundamental concepts that are necessary prerequisites
 for a selected subject.
 
-3. DO NOT GIVE ONLY HIGH-LEVEL TOPICS
+3. DETAILED TOPICS AND SUBTOPICS
 
-The roadmap must go several levels deep.
+Do NOT return only high-level topics.
 
-For example, DO NOT simply return:
+Every subject must contain topics.
 
-DSA
-- Arrays
-- Linked List
-- Trees
-- Graphs
+Every topic must contain detailed subtopics.
 
-Instead, return detailed topics and subtopics.
-
-Example:
+For example:
 
 DSA
   Arrays
@@ -91,87 +108,29 @@ DSA
     - Merge Intervals
     - Binary Search on Arrays
 
-  Linked List
-    - Singly Linked List
-    - Doubly Linked List
-    - Circular Linked List
-    - Traversal
-    - Insertion
-    - Deletion
-    - Reverse Linked List
-    - Find Middle Node
-    - Fast and Slow Pointer
-    - Cycle Detection
-    - Cycle Removal
-    - Merge Two Sorted Lists
-    - Intersection of Linked Lists
-    - Palindrome Linked List
-    - LRU Cache
-    - Linked List Sorting
-
-  Stack
-    - Stack implementation
-    - Array implementation
-    - Linked List implementation
-    - Valid Parentheses
-    - Min Stack
-    - Next Greater Element
-    - Previous Greater Element
-    - Monotonic Stack
-    - Infix / Prefix / Postfix
-    - Expression Evaluation
-
-  Queue
-    - Queue implementation
-    - Circular Queue
-    - Deque
-    - Priority Queue
-    - Sliding Window Maximum
-
-  Trees
-    - Binary Tree
-    - Tree Traversal
-    - Preorder
-    - Inorder
-    - Postorder
-    - Level Order
-    - Height of Tree
-    - Diameter
-    - Balanced Binary Tree
-    - Binary Search Tree
-    - BST Search
-    - BST Insertion
-    - BST Deletion
-    - Lowest Common Ancestor
-    - Tree Views
-    - Heap
-    - Trie
-
-  Graphs
-    - Graph representation
-    - Adjacency Matrix
-    - Adjacency List
-    - BFS
-    - DFS
-    - Connected Components
-    - Cycle Detection
-    - Topological Sort
-    - Shortest Path
-    - Dijkstra's Algorithm
-    - Bellman-Ford
-    - Floyd-Warshall
-    - Minimum Spanning Tree
-    - Prim's Algorithm
-    - Kruskal's Algorithm
-    - Disjoint Set Union
+Linked List
+  - Singly Linked List
+  - Doubly Linked List
+  - Circular Linked List
+  - Traversal
+  - Insertion
+  - Deletion
+  - Reverse Linked List
+  - Find Middle Node
+  - Fast and Slow Pointer
+  - Cycle Detection
+  - Cycle Removal
+  - Merge Two Sorted Lists
+  - Intersection of Linked Lists
+  - Palindrome Linked List
+  - LRU Cache
+  - Linked List Sorting
 
 Do this level of detail for EVERY selected subject.
 
 4. WEB DEVELOPMENT
 
-If Web Development is selected, cover the complete relevant stack.
-
-For example:
+If Web Development is selected, cover the relevant stack.
 
 HTML
   - HTML structure
@@ -268,42 +227,37 @@ Express.js
   - Authorization
   - API security
 
-Do the same for all other selected areas.
-
 5. PROGRAMMING LANGUAGE
 
 Use the programming language selected by the user to personalize
 examples and topics.
 
-For example, if Java is selected, include relevant Java concepts.
+If Java is selected, include relevant Java concepts.
 
 If Python is selected, include relevant Python concepts.
 
-Do not generate complete programming courses unrelated to the user's
-selected preparation areas.
+Do not generate complete programming courses unrelated to the
+user's selected preparation areas.
 
 6. EXPERIENCE LEVEL
 
-Adjust the starting point based on the user's skill levels.
-
-For subjects marked "Never Learned":
+For "Never Learned":
 start from fundamentals.
 
 For "Beginner":
 include fundamentals and gradually move to interview-level concepts.
 
 For "Intermediate":
-avoid spending too much time on basic concepts and move toward
-intermediate and advanced interview topics.
+avoid spending too much time on basic concepts.
 
 For "Strong":
-focus mainly on advanced concepts, patterns, problem solving and
-interview preparation.
+focus mainly on advanced concepts, patterns, problem solving
+and interview preparation.
 
 7. INTERVIEW FOCUS
 
-Include concepts that are commonly useful for technical interviews,
-such as:
+Include concepts commonly useful for technical interviews:
+
 - patterns
 - algorithms
 - data structures
@@ -321,12 +275,11 @@ Be comprehensive.
 Do not stop after 5 or 10 topics.
 
 For every selected subject, include the important topics and
-interview-relevant subtopics that a beginner/intermediate candidate
-would reasonably need for the selected target role.
+interview-relevant subtopics that the candidate would reasonably need.
 
 9. NO DUPLICATES
 
-Do not duplicate the same topic or subtopic within a subject.
+Do not duplicate topics or subtopics.
 
 10. COMPLETION STATUS
 
@@ -405,14 +358,21 @@ Use exactly this structure:
       .replace(/\s*```$/i, '')
       .trim();
 
-    // Convert JSON string into actual JavaScript object
     const parsedRoadmap = JSON.parse(text);
 
     console.log('Parsed roadmap successfully.');
 
+    // Save onboarding data + generated roadmap
+    user.onboardingData = userProfile;
+    user.roadmap = parsedRoadmap.roadmap;
+
+    await user.save();
+
+    console.log('Onboarding data and roadmap saved to MongoDB.');
+
     res.json({
       success: true,
-      roadmap: parsedRoadmap.roadmap,
+      roadmap: user.roadmap,
     });
 
   } catch (error) {

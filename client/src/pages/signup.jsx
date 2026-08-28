@@ -49,6 +49,28 @@ const navigate = useNavigate(); // <-- ADD THIS LINE
 
     const user = userCredential.user;
 
+  
+
+// Create/sync the user in MongoDB
+const mongoResponse = await fetch(
+  'http://localhost:5000/api/auth/sync',
+  {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      firebaseUid: user.uid,
+      email: user.email,
+    }),
+  }
+);
+
+if (!mongoResponse.ok) {
+  throw new Error('Failed to create user in MongoDB.');
+}
+
+
     // Create the user's profile in Firestore
     await setDoc(doc(db, 'users', user.uid), {
       uid: user.uid,

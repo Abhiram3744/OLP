@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useAuth } from "../context/Authcontext";
 import './onboarding.css';
 
 const steps = ['Welcome', 'Profile', 'Career', 'Skills', 'Preferences', 'Review'];
@@ -111,6 +112,7 @@ function ReviewStep({ data, onEdit }) {
 }
 
 export default function OnboardingPage() {
+  const { user } = useAuth();
   const [currentStep, setCurrentStep] = useState(0);
   const [data, setData] = useState(initialData);
   const [error, setError] = useState('');
@@ -148,7 +150,10 @@ export default function OnboardingPage() {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(data),
+      body: JSON.stringify({
+  firebaseUid: user.uid,
+  ...data,
+}),
     });
 
     const result = await response.json();
