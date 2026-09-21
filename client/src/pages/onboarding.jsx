@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useAuth } from "../context/Authcontext";
+import { useNavigate } from "react-router-dom";
 import './onboarding.css';
 
 const steps = ['Welcome', 'Profile', 'Career', 'Skills', 'Preferences', 'Review'];
@@ -112,6 +113,7 @@ function ReviewStep({ data, onEdit }) {
 }
 
 export default function OnboardingPage() {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [currentStep, setCurrentStep] = useState(0);
   const [data, setData] = useState(initialData);
@@ -163,6 +165,7 @@ export default function OnboardingPage() {
     }
 
     console.log('Generated roadmap:', result);
+     navigate('/Dashboard');
 
   } catch (error) {
     console.error('Roadmap generation failed:', error);

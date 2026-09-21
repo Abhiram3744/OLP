@@ -4,6 +4,7 @@ import cors from 'cors';
 import mongoose from 'mongoose';
 import authRouter from './routes/auth.js';
 import roadmapRouter from './routes/roadmap.js';
+import progressRouter from './routes/progress.js';
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -23,6 +24,7 @@ app.get('/api/health', (_req, res) => {
 
 app.use('/api/auth', authRouter);
 app.use('/api/roadmap', roadmapRouter);
+app.use('/api/progress', progressRouter);
 
 app.use((error, _req, res, _next) => {
   console.error(error);

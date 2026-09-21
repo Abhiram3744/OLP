@@ -386,4 +386,37 @@ Use exactly this structure:
   }
 });
 
+router.get("/:firebaseUid", async (req, res) => {
+  try {
+    const { firebaseUid } = req.params;
+
+    const user = await User.findOne({ firebaseUid });
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    return res.json({
+      success: true,
+      user: {
+        firebaseUid: user.firebaseUid,
+        email: user.email,
+        onboardingData: user.onboardingData,
+        roadmap: user.roadmap,
+      },
+    });
+
+  } catch (error) {
+    console.error("Fetch roadmap error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch roadmap",
+    });
+  }
+});
+
 export default router;
