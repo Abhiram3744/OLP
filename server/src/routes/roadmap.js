@@ -1,12 +1,52 @@
 import express from 'express';
-import { GoogleGenAI } from '@google/genai';
 import User from '../models/User.js';
 
 const router = express.Router();
 
-const ai = new GoogleGenAI({
-  apiKey: process.env.GEMINI_API_KEY,
-});
+async function createRoadmapResponse(prompt) {
+  const models = [...new Set([
+    process.env.GEMINI_MODEL || 'gemini-3-flash-preview',
+    'gemini-3.5-flash-lite',
+  ])];
+  let lastError;
+
+  for (const model of models) {
+    try {
+      const url = new URL(
+        `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,
+      );
+      url.searchParams.set('key', process.env.GEMINI_API_KEY || '');
+
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
+        signal: AbortSignal.timeout(60000),
+      });
+      const result = await response.json();
+
+      if (!response.ok) {
+        const error = new Error(result.error?.message || `Gemini request failed with HTTP ${response.status}.`);
+        error.status = response.status;
+        throw error;
+      }
+
+      return result.candidates?.[0]?.content?.parts
+        ?.map((part) => part.text || '')
+        .join('')
+        .trim();
+    } catch (error) {
+      lastError = error;
+      const status = error.status || error.statusCode;
+      const isTemporaryServiceError = status === 429 || status >= 500
+        || error.name === 'TimeoutError' || error.name === 'AbortError';
+      if (!isTemporaryServiceError || model === models.at(-1)) throw error;
+      console.warn(`${model} unavailable (HTTP ${status}); trying ${models[models.indexOf(model) + 1]}.`);
+    }
+  }
+
+  throw lastError;
+}
 
 router.post('/generate', async (req, res) => {
   try {
@@ -341,12 +381,12 @@ Use exactly this structure:
 }
 `;
 
-    const interaction = await ai.interactions.create({
-      model: 'gemini-3.6-flash',
-      input: prompt,
-    });
+    const interaction = await createRoadmapResponse(prompt);
 
-    let text = interaction.output_text.trim();
+    let text = interaction;
+    if (!text) {
+      throw new Error('Gemini returned an empty roadmap response.');
+    }
 
     console.log('Gemini raw response:');
     console.log(text);
@@ -378,10 +418,14 @@ Use exactly this structure:
   } catch (error) {
     console.error('Roadmap generation error:', error);
 
-    res.status(500).json({
+    const status = error.status || error.statusCode;
+    const isTemporaryServiceError = status === 429 || status >= 500;
+
+    res.status(isTemporaryServiceError ? 503 : 500).json({
       success: false,
-      message: 'Failed to generate roadmap',
-      error: error.message,
+      message: isTemporaryServiceError
+        ? 'The roadmap service is temporarily busy. Please try again in a little while.'
+        : 'Failed to generate roadmap. Please try again.',
     });
   }
 });
@@ -415,6 +459,90 @@ router.get("/:firebaseUid", async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Failed to fetch roadmap",
+    });
+  }
+});
+
+router.patch('/:firebaseUid/progress', async (req, res) => {
+  try {
+    const { firebaseUid } = req.params;
+    const { subjectId, topicId, subtopicId, completed } = req.body;
+
+    const user = await User.findOne({ firebaseUid });
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found',
+      });
+    }
+
+    const subject = user.roadmap.find(
+      (item) => item.id === subjectId
+    );
+
+    if (!subject) {
+      return res.status(404).json({
+        success: false,
+        message: 'Subject not found',
+      });
+    }
+
+    const topic = subject.topics.find(
+      (item) => item.id === topicId
+    );
+
+    if (!topic) {
+      return res.status(404).json({
+        success: false,
+        message: 'Topic not found',
+      });
+    }
+
+    if (subtopicId) {
+      const subtopic = topic.subtopics.find(
+        (item) => item.id === subtopicId
+      );
+
+      if (!subtopic) {
+        return res.status(404).json({
+          success: false,
+          message: 'Subtopic not found',
+        });
+      }
+
+      subtopic.completed = completed;
+
+      // A topic is complete only when all its subtopics are complete.
+      topic.completed = topic.subtopics.every(
+        (item) => item.completed
+      );
+    } else {
+      topic.completed = completed;
+
+      // Clicking a topic marks all its subtopics the same way.
+      topic.subtopics.forEach((item) => {
+        item.completed = completed;
+      });
+    }
+
+    // A subject is complete only when all its topics are complete.
+    subject.completed = subject.topics.every(
+      (item) => item.completed
+    );
+
+    await user.save();
+
+    return res.json({
+      success: true,
+      roadmap: user.roadmap,
+    });
+  } catch (error) {
+    console.error('Update progress error:', error);
+
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to update progress',
     });
   }
 });

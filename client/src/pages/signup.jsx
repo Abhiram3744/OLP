@@ -4,6 +4,8 @@ import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '../firebase';
 
+const API_URL = import.meta.env.VITE_API_URL || '';
+
 
 function BrandMark() {
   return <svg className="brand-mark" viewBox="0 0 40 40" fill="none" aria-hidden="true"><rect x="4" y="24" width="32" height="6" rx="1.5" fill="#fff"/><rect x="9" y="17" width="8" height="9" rx="1" fill="#fff"/><path d="M23 6 27 13h5l-6 11h-5l6-11h-4l-4 7-4-7h5l3-7Z" fill="#FF7A3D"/></svg>;
@@ -53,7 +55,7 @@ const navigate = useNavigate(); // <-- ADD THIS LINE
 
 // Create/sync the user in MongoDB
 const mongoResponse = await fetch(
-  'http://localhost:5000/api/auth/sync',
+  `${API_URL}/api/auth/sync`,
   {
     method: 'POST',
     headers: {

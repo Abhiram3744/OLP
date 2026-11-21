@@ -3,6 +3,8 @@ import { useAuth } from "../context/Authcontext";
 import { useNavigate } from "react-router-dom";
 import './onboarding.css';
 
+const API_URL = import.meta.env.VITE_API_URL || '';
+
 const steps = ['Welcome', 'Profile', 'Career', 'Skills', 'Preferences', 'Review'];
 const statuses = ['Student', 'Graduate', 'Working Professional'];
 const degrees = ['B.Tech / BE', 'BCA', 'BSc', 'MCA', 'M.Tech', 'Diploma', 'Other'];
@@ -147,7 +149,7 @@ export default function OnboardingPage() {
   setError('');
 
   try {
-    const response = await fetch('http://localhost:5000/api/roadmap/generate', {
+    const response = await fetch(`${API_URL}/api/roadmap/generate`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

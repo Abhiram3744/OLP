@@ -1,12 +1,10 @@
 import React, { useState } from 'react';
-import { sendPasswordResetEmail } from "firebase/auth";
+import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../firebase";
 import { Link, useNavigate } from 'react-router-dom';
 import './login.css';
 
-// TODO (STEP 7): If you have Firebase, import your config here:
-// import { auth } from '../firebase'; // <-- Update path to your firebase config
-// import { signInWithEmailAndPassword } from 'firebase/auth';
+const API_URL = import.meta.env.VITE_API_URL || '';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -36,21 +34,22 @@ const Login = () => {
     setLoading(true);
 
     try {
-      // TODO (STEP 7): If using Firebase, uncomment the line below:
-      // await signInWithEmailAndPassword(auth, email, password);
-      
-      // Simulating a network request for now
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-      
-      // STEP 6: Redirect on successful login
-      navigate('/onboarding'); // First-time user setup
+      const { user } = await signInWithEmailAndPassword(auth, email, password);
+      const response = await fetch(`${API_URL}/api/roadmap/${user.uid}`);
+
+      if (!response.ok && response.status !== 404) {
+        throw new Error('Signed in, but could not load your saved progress. Please try again.');
+      }
+
+      const result = response.ok ? await response.json() : null;
+      navigate(result?.user?.roadmap?.length ? '/dashboard' : '/onboarding', { replace: true });
       
     } catch (err) {
       // Firebase error handling
-      if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
+      if (['auth/user-not-found', 'auth/wrong-password', 'auth/invalid-credential'].includes(err.code)) {
         setError('Invalid email or password.');
       } else {
-        setError('Failed to log in. Please try again.');
+        setError(err.message || 'Failed to log in. Please try again.');
       }
     } finally {
       setLoading(false);

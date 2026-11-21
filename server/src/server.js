@@ -7,13 +7,14 @@ import roadmapRouter from './routes/roadmap.js';
 import progressRouter from './routes/progress.js';
 
 const app = express();
-const port = process.env.PORT || 5000;
+const port = process.env.PORT || 5001;
 
 app.use(cors({
-  origin: [
-    'http://localhost:5173',
-    'http://127.0.0.1:5173'
-  ]
+  origin(origin, callback) {
+    // Vite may move to another port when its default port is already in use.
+    const isLocalDevOrigin = !origin || /^https?:\/\/(localhost|127\.0\.0\.1):\d+$/.test(origin);
+    callback(isLocalDevOrigin ? null : new Error('Origin is not allowed by CORS'), isLocalDevOrigin);
+  }
 }));
 
 app.use(express.json());

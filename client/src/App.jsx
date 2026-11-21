@@ -10,6 +10,13 @@ import OnboardingPage from "./pages/onboarding";
 import ProtectedRoute from "./components/ProtectedRoute";
 import ForgotPassword from "./pages/ForgotPassword";
 import Dashboard from "./pages/Dashboard";
+import { useAuth } from "./context/Authcontext";
+
+function HomeRedirect() {
+  const { user, loading } = useAuth();
+  if (loading) return <div>Loading...</div>;
+  return <Navigate to={user ? "/dashboard" : "/signup"} replace />;
+}
 
 export default function App() {
 
@@ -19,12 +26,7 @@ export default function App() {
 
       <Route
         path="/"
-        element={
-          <Navigate
-            to="/signup"
-            replace
-          />
-        }
+        element={<HomeRedirect />}
       />
 
       <Route

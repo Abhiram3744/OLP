@@ -4,7 +4,7 @@ import { useAuth } from "../context/Authcontext";
 import DashboardSidebar from "../components/Dashboardsidebar";
 import "./Dashboard.css";
 
-const API_URL = "http://localhost:5000";
+const API_URL = import.meta.env.VITE_API_URL || "";
 
 export default function Dashboard() {
 
@@ -23,6 +23,7 @@ export default function Dashboard() {
       try {
 
         setLoading(true);
+          console.log("Firebase UID:", user.uid);
 
         const response = await fetch(
           `${API_URL}/api/roadmap/${user.uid}`
