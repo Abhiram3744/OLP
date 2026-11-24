@@ -6,6 +6,29 @@ import "./Dashboard.css";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
+async function readApiResponse(response) {
+  const body = await response.text();
+  let result = null;
+
+  if (body.trim()) {
+    try {
+      result = JSON.parse(body);
+    } catch {
+      throw new Error(`The API returned an invalid response (HTTP ${response.status}).`);
+    }
+  }
+
+  if (!response.ok) {
+    throw new Error(result?.message || `The API request failed (HTTP ${response.status}).`);
+  }
+
+  if (!result) {
+    throw new Error(`The API returned an empty response (HTTP ${response.status}).`);
+  }
+
+  return result;
+}
+
 export default function Dashboard() {
 
   const { user, loading: authLoading } = useAuth();
@@ -29,13 +52,19 @@ export default function Dashboard() {
           `${API_URL}/api/roadmap/${user.uid}`
         );
 
-        const result = await response.json();
-
-        if (!response.ok) {
-          throw new Error(
-            result.message || "Failed to load dashboard"
-          );
+        if (response.status === 404) {
+          const syncResponse = await fetch(`${API_URL}/api/auth/sync`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ firebaseUid: user.uid, email: user.email }),
+          });
+          await readApiResponse(syncResponse);
+          setRoadmap([]);
+          setProfile({});
+          return;
         }
+
+        const result = await readApiResponse(response);
 
         setRoadmap(result.user.roadmap || []);
         setProfile(result.user.onboardingData || {});
@@ -145,13 +174,7 @@ export default function Dashboard() {
         }
       );
 
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(
-          result.message || "Failed to update progress"
-        );
-      }
+      const result = await readApiResponse(response);
 
       setRoadmap(result.roadmap);
 
